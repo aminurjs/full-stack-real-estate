@@ -1,16 +1,17 @@
+import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import cookieParser from "cookie-parser";
+
+dotenv.config();
 
 const PORT = process.env.PORT || 8000;
 const app = express();
 
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-
-app.get("/", (req, res) => {
-  res.status(200).json("Welcome to the Home Page!");
-});
 
 app.use("/api/auth", authRoutes);
 
@@ -21,6 +22,9 @@ app.use((req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.status(200).json("Welcome to the Server!");
+});
 app.listen(PORT, () => {
   console.log(`Server is running on port: ${PORT}`);
 });

@@ -2,10 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "../lib/db.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "yourSecretKey";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const register = async (req, res) => {
   const { userName, email, password } = req.body;
+  console.log(req.body);
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,14 +44,16 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
+    const { password: pass, ...userInfo } = user;
+
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "1h" });
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
       maxAge: 3600000,
-      sameSite: "strict",
+      sameSite: "none",
     });
-    res.status(200).json({ success: true, token });
+    res.status(200).json({ success: true, userInfo });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "An error occurred during login" });
@@ -58,5 +61,8 @@ export const login = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.status(200).json({ success: true, message: "User logged out successfully" });
+  res
+    .clearCookie("token")
+    .status(200)
+    .json({ success: true, message: "User logged out successfully" });
 };
